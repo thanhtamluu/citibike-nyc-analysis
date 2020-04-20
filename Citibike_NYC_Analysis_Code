@@ -1,0 +1,110 @@
+-- Stations at capacity, empty, or out of service
+
+SELECT name, capacity, num_bikes_available
+FROM `bigquery-public-data.new_york_citibike.citibike_stations`
+WHERE num_bikes_available = capacity
+
+SELECT COUNT(*)
+FROM `bigquery-public-data.new_york_citibike.citibike_stations`
+WHERE num_bikes_available = capacity
+
+SELECT name, capacity, num_bikes_available
+FROM `bigquery-public-data.new_york_citibike.citibike_stations`
+WHERE num_bikes_available = 0
+
+SELECT COUNT(*)
+FROM `bigquery-public-data.new_york_citibike.citibike_stations`
+WHERE num_bikes_available = 0
+
+SELECT name
+FROM `bigquery-public-data.new_york_citibike.citibike_stations`
+WHERE is_renting = FALSE
+
+SELECT COUNT(*)
+FROM `bigquery-public-data.new_york_citibike.citibike_stations`
+WHERE is_renting = FALSE
+
+-- Fill rate for each station
+
+SELECT DISTINCT(name), num_bikes_available/capacity AS fill_rate
+FROM `bigquery-public-data.new_york_citibike.citibike_stations`
+
+SELECT DISTINCT(name), num_bikes_available/capacity AS fill_rate
+FROM `bigquery-public-data.new_york_citibike.citibike_stations`
+ORDER BY 2 DESC
+
+-- The most popular station to start rides for all time
+
+SELECT start_station_name, COUNT(*) AS trip_counts
+FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 2
+
+-- The most popular station to end rides for all time
+
+SELECT end_station_name, COUNT(*) AS trip_counts
+FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 2
+
+-- Top 3 most popular trips
+
+SELECT start_station_name, end_station_name, COUNT(*) AS trip_counts,
+FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+GROUP BY 1, 2
+ORDER BY 3 DESC
+LIMIT 4
+
+-- Usage peak on weekdays (hours of the day)
+
+SELECT EXTRACT(HOUR FROM starttime) AS hour, EXTRACT(DAYOFWEEK FROM starttime) AS day, start_station_name, COUNT(*) AS trip_counts
+FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+WHERE EXTRACT(DAYOFWEEK FROM starttime) IN (2, 3, 4, 5, 6)
+GROUP BY 1, 2, 3
+ORDER BY 4 DESC
+
+-- Usage peak on weekends (hours of the day)
+
+SELECT EXTRACT(HOUR FROM starttime) AS hour, EXTRACT(DAYOFWEEK FROM starttime) AS day, start_station_name, COUNT(*) AS trip_counts
+FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+WHERE EXTRACT(DAYOFWEEK FROM starttime) IN (1, 7)
+GROUP BY 1, 2, 3
+ORDER BY 4 DESC
+
+-- # of trips per day
+
+SELECT DATE(starttime) AS day, COUNT(*) AS trips_count,
+FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+GROUP BY 1
+ORDER BY 1 DESC
+
+-- Average trip duration
+
+SELECT AVG(tripduration)/60 AS avg_tripduration_minutes
+FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+
+-- The shortest trip so far
+
+SELECT tripduration/60, starttime, stoptime, start_station_name, end_station_name
+FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+WHERE tripduration IS NOT NULL
+ORDER BY 1
+LIMIT 1
+
+-- The longest trip so far
+
+SELECT tripduration/60 AS trip_duration_minutes, starttime, stoptime, start_station_name, end_station_name
+FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+ORDER BY 1 DESC
+LIMIT 1
+
+-- Total hours of usage per each bike
+
+SELECT bikeid, AVG(tripduration)/3600 AS avg_trip_duration_hours
+FROM `bigquery-public-data.new_york_citibike.citibike_trips`
+WHERE bikeid IS NOT NULL
+GROUP BY 1
+HAVING AVG(tripduration)/3600 IS NOT NULL
+ORDER BY 2 DESC
